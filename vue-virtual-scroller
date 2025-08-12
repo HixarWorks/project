@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Vue 虛擬滾動 Demo</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/vue-virtual-scroller@2.0.0-beta.4/dist/vue-virtual-scroller.umd.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/vue-virtual-scroller@2.0.0-beta.4/dist/vue-virtual-scroller.css">
+  <style>
+    body { font-family: sans-serif; margin: 0; }
+    .item {
+      background: #f2f2f2;
+      margin: 4px;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div style="padding:10px; background:#ddd;">
+    <button @click="shuffleData">隨機更新資料</button>
+    <input type="number" v-model.number="scrollToIndex" placeholder="輸入要跳到的項目編號" />
+    <button @click="goToItem">跳到指定項目</button>
+  </div>
+
+  <!-- 虛擬滾動清單 -->
+  <vue-virtual-scroller.DynamicScroller
+    ref="scroller"
+    :items="items"
+    :min-item-size="50"
+    key-field="id"
+    class="scroller"
+    style="height: 80vh; overflow-y: auto;"
+  >
+    <template #default="{ item, index }">
+      <vue-virtual-scroller.DynamicScrollerItem :item="item" :active="true">
+        <div class="item">
+          <h3>項目 #{{ item.id }}</h3>
+          <p>{{ item.text }}</p>
+        </div>
+      </vue-virtual-scroller.DynamicScrollerItem>
+    </template>
+  </vue-virtual-scroller.DynamicScroller>
+</div>
+
+<script>
+const { createApp, ref } = Vue;
+
+createApp({
+  components: {
+    'vue-virtual-scroller': VueVirtualScroller
+  },
+  setup() {
+    const items = ref([]);
+    const scrollToIndex = ref(0);
+    const scroller = ref(null);
+
+    // 產生隨機長度文字
+    function randomText() {
+      const len = Math.floor(Math.random() * 200) + 20;
+      return Array(len).fill('內容').join(' ');
+    }
+
+    // 初始化 10000 筆資料
+    for (let i = 0; i < 10000; i++) {
+      items.value.push({ id: i, text: randomText() });
+    }
+
+    function shuffleData() {
+      const index = Math.floor(Math.random() * items.value.length);
+      items.value[index].text = randomText(); // 更新某項
+    }
+
+    function goToItem() {
+      if (scroller.value && scrollToIndex.value >= 0 && scrollToIndex.value < items.value.length) {
+        scroller.value.scrollToItem(scrollToIndex.value);
+      }
+    }
+
+    return { items, shuffleData, scrollToIndex, goToItem, scroller };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
